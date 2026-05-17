@@ -1,0 +1,1 @@
+"""X trend research batch."""

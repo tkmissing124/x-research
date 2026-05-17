@@ -1,0 +1,35 @@
+name: Twitter AI Morning
+
+on:
+  schedule:
+    - cron: "17 9 * * *"
+      timezone: "Asia/Tokyo"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run batch
+        env:
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          XR_TOPIC: ${{ vars.XR_TOPIC || 'AI' }}
+          XR_HOURS: ${{ vars.XR_HOURS || '24' }}
+          XR_MAX_RESULTS_PER_QUERY: ${{ vars.XR_MAX_RESULTS_PER_QUERY || '50' }}
+          XR_CLUSTER_COUNT: ${{ vars.XR_CLUSTER_COUNT || '4' }}
+          XR_POST_LINKS_PER_TOPIC: ${{ vars.XR_POST_LINKS_PER_TOPIC || '3' }}
+          XR_LANGUAGE_HINTS: ${{ vars.XR_LANGUAGE_HINTS || 'ja,en' }}
+        run: python run.py
