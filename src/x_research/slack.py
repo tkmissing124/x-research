@@ -13,4 +13,8 @@ class SlackWebhookClient:
             json={"text": text},
             timeout=30,
         )
-        response.raise_for_status()
+        if response.status_code >= 400:
+            detail = response.text.strip()
+            raise RuntimeError(
+                f"Slack webhook failed with status={response.status_code}: {detail}"
+            )

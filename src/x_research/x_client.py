@@ -23,7 +23,7 @@ class XRecentSearchClient:
         )
 
     def fetch_recent(self) -> List[Tweet]:
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(timezone.utc) - timedelta(seconds=30)
         start_time = end_time - timedelta(hours=self.settings.hours)
 
         all_tweets: Dict[str, Tweet] = {}
@@ -62,7 +62,8 @@ class XRecentSearchClient:
                 params["next_token"] = next_token
 
             response = self.session.get(self.base_url, params=params, timeout=30)
-            response.raise_for_status()
+            if response.status_code >= 400:
+                self._raise_api_error(response, query)
             payload = response.json()
 
             users = {
@@ -98,3 +99,25 @@ class XRecentSearchClient:
 
         tweets.sort(key=lambda item: (item.engagement_score, item.created_at), reverse=True)
         return tweets[: self.settings.max_results_per_query]
+
+    @staticmethod
+    def _raise_api_error(response: requests.Response, query: str) -> None:
+        message = f"X recent search failed with status={response.status_code}"
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+
+        if isinstance(payload, dict):
+            errors = payload.get("errors") or []
+            if errors:
+                first = errors[0]
+                detail = first.get("detail") or first.get("message") or str(first)
+                message += f": {detail}"
+            elif payload.get("detail"):
+                message += f": {payload['detail']}"
+
+        message += f" | query={query}"
+        if response.status_code in {401, 403}:
+            message += " | Check that X_BEARER_TOKEN is a Bearer Token, not an API key or client secret."
+        raise RuntimeError(message)

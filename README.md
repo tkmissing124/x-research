@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 ### 2. 環境変数
 
-`.env.example` を参考に環境変数を設定してください。
+`.env.example` を参考に `.env` を作成するか、シェル変数として設定してください。
 
 必須:
 
@@ -41,11 +41,19 @@ pip install -r requirements.txt
 
 ### 3. ローカル実行
 
+まずは Slack 送信を切った dry-run で確認するのがおすすめです。
+
 ```bash
-python -m src.x_research.main
+cp .env.example .env
 ```
 
-または:
+`.env` を埋めたら:
+
+```bash
+XR_DRY_RUN=true python run.py
+```
+
+問題なければ本番送信:
 
 ```bash
 python run.py
@@ -67,6 +75,7 @@ python run.py
 - `XR_CLUSTER_COUNT`
 - `XR_MAX_RESULTS_PER_QUERY`
 - `XR_LANGUAGE_HINTS`
+- `XR_DRY_RUN`
 
 ## 実装メモ
 
