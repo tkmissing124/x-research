@@ -41,31 +41,31 @@ pip install -r requirements.txt
 - `XR_MAX_TURNS`: Grok がツール利用しながら応答を完成させる最大ターン数。初期値は `1`
 - `XR_ALLOWED_X_HANDLES`: 収集対象を絞るときの allowed handles。初期値は `OpenAI,AnthropicAI,GoogleDeepMind`
 - `XR_EXCLUDED_X_HANDLES`: 除外したい handles。カンマ区切り
-- `XR_DRY_RUN`: `true` にすると xAI API と `x_search` を呼ばず、モックの朝刊を生成して Slack 投稿まで確認する
+- `XR_DRY_RUN`: 初期値は `false`。`true` にすると xAI API と `x_search` を呼ばず、モックの朝刊を生成して Slack 投稿まで確認する
 
 ### 3. ローカル実行
 
-まずは API課金なしで確認できる dry-run で試すのがおすすめです。
+まずは `.env` の既定値で本番実行できます。必要なら dry-run に切り替えてモック確認もできます。
 
 ```bash
 cp .env.example .env
 ```
 
-`.env` を埋めたら、まずはモック実行:
-
-```bash
-XR_DRY_RUN=true python run.py
-```
-
-問題なければ本番の xAI API 実行:
+`.env` を埋めたら、そのまま本番実行:
 
 ```bash
 python run.py
 ```
 
+モック実行で Slack 連携だけ確認したい場合:
+
+```bash
+XR_DRY_RUN=true python run.py
+```
+
 ## GitHub Actions
 
-`.github/workflows/twitter-ai-morning.yml` を使うと、GitHub Actions から定期実行できます。
+`.github/workflows/twitter-ai-morning.yml` を使うと、GitHub Actions から毎日 `22:00 JST` に定期実行できます。
 
 必要な Repository Secrets:
 

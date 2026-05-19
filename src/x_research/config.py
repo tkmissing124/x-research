@@ -52,24 +52,21 @@ def load_settings() -> Settings:
     _load_dotenv()
 
     xai_api_key = os.getenv("XAI_API_KEY", "").strip()
-    legacy_x_token = os.getenv("X_BEARER_TOKEN", "").strip()
     slack_webhook_url = os.getenv("SLACK_WEBHOOK_URL", "").strip()
     topic = os.getenv("XR_TOPIC", "AI").strip() or "AI"
     hours = int(os.getenv("XR_HOURS", "24"))
-    cluster_count = int(os.getenv("XR_CLUSTER_COUNT", "4"))
-    post_links_per_topic = int(os.getenv("XR_POST_LINKS_PER_TOPIC", "3"))
+    cluster_count = int(os.getenv("XR_CLUSTER_COUNT", "3"))
+    post_links_per_topic = int(os.getenv("XR_POST_LINKS_PER_TOPIC", "2"))
     language_hints = _split_csv(os.getenv("XR_LANGUAGE_HINTS", "ja,en"))
-    allowed_x_handles = _split_csv(os.getenv("XR_ALLOWED_X_HANDLES"))
+    allowed_x_handles = _split_csv(
+        os.getenv("XR_ALLOWED_X_HANDLES", "OpenAI,AnthropicAI,GoogleDeepMind")
+    )
     excluded_x_handles = _split_csv(os.getenv("XR_EXCLUDED_X_HANDLES"))
     model = os.getenv("XR_MODEL", "grok-4.3").strip() or "grok-4.3"
-    max_turns = int(os.getenv("XR_MAX_TURNS", "2"))
+    max_turns = int(os.getenv("XR_MAX_TURNS", "1"))
     dry_run = _get_bool("XR_DRY_RUN", False)
 
     if not xai_api_key and not dry_run:
-        if legacy_x_token:
-            raise ValueError(
-                "XAI_API_KEY is required. X_BEARER_TOKEN is an X API token and cannot be used for Grok x_search."
-            )
         raise ValueError("XAI_API_KEY is required")
     if not slack_webhook_url:
         raise ValueError("SLACK_WEBHOOK_URL is required")

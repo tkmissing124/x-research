@@ -2,7 +2,7 @@ name: Twitter AI Morning
 
 on:
   schedule:
-    - cron: "17 0 * * *"
+    - cron: "0 13 * * *"
   workflow_dispatch:
 
 env:
@@ -37,7 +37,7 @@ jobs:
           XR_MAX_TURNS: ${{ vars.XR_MAX_TURNS || '1' }}
           XR_ALLOWED_X_HANDLES: ${{ vars.XR_ALLOWED_X_HANDLES || 'OpenAI,AnthropicAI,GoogleDeepMind' }}
           XR_EXCLUDED_X_HANDLES: ${{ vars.XR_EXCLUDED_X_HANDLES || '' }}
-          XR_DRY_RUN: ${{ vars.XR_DRY_RUN || 'true' }}
+          XR_DRY_RUN: ${{ vars.XR_DRY_RUN || 'false' }}
         run: |
           test -n "$SLACK_WEBHOOK_URL" || { echo "SLACK_WEBHOOK_URL is empty"; exit 1; }
           if [ "$XR_DRY_RUN" != "true" ]; then
@@ -65,5 +65,5 @@ jobs:
           XR_MAX_TURNS: ${{ vars.XR_MAX_TURNS || '1' }}
           XR_ALLOWED_X_HANDLES: ${{ vars.XR_ALLOWED_X_HANDLES || 'OpenAI,AnthropicAI,GoogleDeepMind' }}
           XR_EXCLUDED_X_HANDLES: ${{ vars.XR_EXCLUDED_X_HANDLES || '' }}
-          XR_DRY_RUN: ${{ vars.XR_DRY_RUN || 'true' }}
+          XR_DRY_RUN: ${{ vars.XR_DRY_RUN || 'false' }}
         run: python -u run.py
