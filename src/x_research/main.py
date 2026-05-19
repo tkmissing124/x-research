@@ -3,41 +3,37 @@ from __future__ import annotations
 import sys
 import traceback
 
-from .cluster import assign_clusters
 from .config import load_settings
-from .render import build_slack_markdown
 from .slack import SlackWebhookClient
-from .x_client import XRecentSearchClient
+from .x_client import XAIMorningClient
 
 
 def main() -> int:
     try:
         settings = load_settings()
         print(
-            "Starting batch "
-            f"topic={settings.topic} hours={settings.hours} queries={len(settings.queries)} "
-            f"dry_run={settings.dry_run}"
+            "Starting Grok batch "
+            f"topic={settings.topic} hours={settings.hours} model={settings.model} "
+            f"max_turns={settings.max_turns} dry_run={settings.dry_run}"
         )
 
-        client = XRecentSearchClient(settings)
-        tweets = client.fetch_recent()
-        print(f"Fetched {len(tweets)} unique tweets.")
+        client = XAIMorningClient(settings)
+        report = client.generate_report()
 
-        if not tweets:
-            print("No tweets found in the selected time window.")
-            return 0
-
-        clusters = assign_clusters(tweets, settings.cluster_count)
-        print(f"Built {len(clusters)} topic clusters.")
-        message = build_slack_markdown(clusters, settings)
-
-        if settings.dry_run:
-            sys.stdout.write(message)
-            return 0
+        x_search_calls = report.tool_usage.get("x_search", 0)
+        if report.tool_usage.get("mocked"):
+            print("dry-run mock mode enabled: xAI API was not called.")
+        if x_search_calls:
+            print(f"x_search tool calls: {x_search_calls}")
+        if report.usage:
+            print(f"token usage: {report.usage}")
+        if report.citations:
+            print(f"citations captured: {len(report.citations)}")
 
         slack = SlackWebhookClient(settings.slack_webhook_url)
-        slack.post_markdown(message)
-        print(f"Posted {len(clusters)} topics to Slack.")
+        slack.post_markdown(report.text)
+        print("Posted morning report to Slack.")
+        sys.stdout.write(report.text)
         return 0
     except Exception as exc:
         print(f"Batch failed: {exc}", file=sys.stderr)

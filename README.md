@@ -1,13 +1,13 @@
 # x-research
 
-X(Twitter) 上の AI 関連ホットトピックを過去 24 時間ぶん収集し、Slack に「Twitter AI 朝刊」として投稿する定期バッチです。
+xAI API の Grok + `x_search` を使って、X 上のホットトピックを調べ、Slack に「Twitter AI 朝刊」として投稿する定期バッチです。
 
 このリポジトリは次の流れで動きます。
 
-1. X API v2 recent search で広めの AI 系クエリを実行
-2. 取得した投稿をスコアリングして重複排除
-3. 高頻出フレーズから 3-6 個の話題クラスターを生成
-4. Slack 向け Markdown に整形して Incoming Webhook に投稿
+1. xAI Responses API に自然言語プロンプトを送る
+2. Grok が `x_search` を使って X 上の直近トレンドを調べる
+3. Grok が Slack 向け Markdown の朝刊にまとめる
+4. Slack Incoming Webhook に投稿する
 
 ## セットアップ
 
@@ -25,35 +25,39 @@ pip install -r requirements.txt
 
 必須:
 
-- `X_BEARER_TOKEN`: X API Bearer Token
+- `XAI_API_KEY`: xAI API key
 - `SLACK_WEBHOOK_URL`: Slack Incoming Webhook URL
+
+`XR_DRY_RUN=true` の間は `XAI_API_KEY` が未設定でも動かせます。モックの朝刊を生成して、Slack 連携や定期実行だけ確認できます。
 
 任意:
 
 - `XR_TOPIC`: 収集対象テーマ。初期値は `AI`
 - `XR_HOURS`: 収集期間。初期値は `24`
-- `XR_MAX_RESULTS_PER_QUERY`: クエリごとの取得件数。初期値は `50`
-- `XR_CLUSTER_COUNT`: 出力するトピック数。初期値は `4`
-- `XR_POST_LINKS_PER_TOPIC`: トピックごとの元投稿リンク数。初期値は `3`
+- `XR_CLUSTER_COUNT`: 出力するトピック数の目安。初期値は `3`
+- `XR_POST_LINKS_PER_TOPIC`: トピックごとの元投稿リンク数の目安。初期値は `2`
 - `XR_LANGUAGE_HINTS`: カンマ区切り。例: `ja,en`
-- `XR_EXTRA_QUERIES`: 追加クエリ。改行区切り
-- `XR_DRY_RUN`: `true` にすると Slack 送信せず stdout に出力
+- `XR_MODEL`: xAI で使うモデル。初期値は `grok-4.3`
+- `XR_MAX_TURNS`: Grok がツール利用しながら応答を完成させる最大ターン数。初期値は `1`
+- `XR_ALLOWED_X_HANDLES`: 収集対象を絞るときの allowed handles。初期値は `OpenAI,AnthropicAI,GoogleDeepMind`
+- `XR_EXCLUDED_X_HANDLES`: 除外したい handles。カンマ区切り
+- `XR_DRY_RUN`: `true` にすると xAI API と `x_search` を呼ばず、モックの朝刊を生成して Slack 投稿まで確認する
 
 ### 3. ローカル実行
 
-まずは Slack 送信を切った dry-run で確認するのがおすすめです。
+まずは API課金なしで確認できる dry-run で試すのがおすすめです。
 
 ```bash
 cp .env.example .env
 ```
 
-`.env` を埋めたら:
+`.env` を埋めたら、まずはモック実行:
 
 ```bash
 XR_DRY_RUN=true python run.py
 ```
 
-問題なければ本番送信:
+問題なければ本番の xAI API 実行:
 
 ```bash
 python run.py
@@ -65,7 +69,7 @@ python run.py
 
 必要な Repository Secrets:
 
-- `X_BEARER_TOKEN`
+- `XAI_API_KEY`
 - `SLACK_WEBHOOK_URL`
 
 必要に応じて Repository Variables を追加できます。
@@ -73,13 +77,16 @@ python run.py
 - `XR_TOPIC`
 - `XR_HOURS`
 - `XR_CLUSTER_COUNT`
-- `XR_MAX_RESULTS_PER_QUERY`
+- `XR_POST_LINKS_PER_TOPIC`
 - `XR_LANGUAGE_HINTS`
+- `XR_MODEL`
+- `XR_MAX_TURNS`
+- `XR_ALLOWED_X_HANDLES`
+- `XR_EXCLUDED_X_HANDLES`
 - `XR_DRY_RUN`
 
-## 実装メモ
+## コストメモ
 
-- 収集は X API の recent search を使用します
-- クラスタリングは軽量なヒューリスティックです
-- LLM 依存を外しているので、まずは安定して定期運用しやすい構成です
-- 将来的に OpenAI/xAI などで要約部分だけ差し替えやすいように、整形処理は分離しています
+- 課金は `x_search` の call 数と、使う Grok モデルの token usage に依存します
+- `XR_DRY_RUN=true` は APIモック実行なので、xAI API や `x_search` の課金は発生しません
+- `XR_ALLOWED_X_HANDLES` で対象を絞ると、探索範囲とコストのコントロールに役立ちます
