@@ -37,9 +37,11 @@ pip install -r requirements.txt
 - `XR_CLUSTER_COUNT`: 出力するトピック数の目安。初期値は `3`
 - `XR_POST_LINKS_PER_TOPIC`: トピックごとの元投稿リンク数の目安。初期値は `2`
 - `XR_LANGUAGE_HINTS`: カンマ区切り。例: `ja,en`
+- `XR_SOURCE_MODE`: 収集方針。`official` / `mixed` / `discovery`。初期値は `mixed`
+- `XR_OFFICIAL_X_HANDLES`: 公式アンカーとして重視する handles。初期値は `OpenAI,AnthropicAI,GoogleDeepMind,xAI,GoogleAI`
 - `XR_MODEL`: xAI で使うモデル。初期値は `grok-4.3`
-- `XR_MAX_TURNS`: Grok がツール利用しながら応答を完成させる最大ターン数。初期値は `1`
-- `XR_ALLOWED_X_HANDLES`: 収集対象を絞るときの allowed handles。初期値は `OpenAI,AnthropicAI,GoogleDeepMind`
+- `XR_MAX_TURNS`: Grok がツール利用しながら応答を完成させる最大ターン数。初期値は `2`
+- `XR_ALLOWED_X_HANDLES`: 収集対象をハードに絞るときの allowed handles。初期値は空
 - `XR_EXCLUDED_X_HANDLES`: 除外したい handles。カンマ区切り
 - `XR_DRY_RUN`: 初期値は `false`。`true` にすると xAI API と `x_search` を呼ばず、モックの朝刊を生成して Slack 投稿まで確認する
 
@@ -79,6 +81,8 @@ XR_DRY_RUN=true python run.py
 - `XR_CLUSTER_COUNT`
 - `XR_POST_LINKS_PER_TOPIC`
 - `XR_LANGUAGE_HINTS`
+- `XR_SOURCE_MODE`
+- `XR_OFFICIAL_X_HANDLES`
 - `XR_MODEL`
 - `XR_MAX_TURNS`
 - `XR_ALLOWED_X_HANDLES`
@@ -90,3 +94,11 @@ XR_DRY_RUN=true python run.py
 - 課金は `x_search` の call 数と、使う Grok モデルの token usage に依存します
 - `XR_DRY_RUN=true` は APIモック実行なので、xAI API や `x_search` の課金は発生しません
 - `XR_ALLOWED_X_HANDLES` で対象を絞ると、探索範囲とコストのコントロールに役立ちます
+- `XR_SOURCE_MODE=mixed` では公式情報を重視しつつ、非公式の高エンゲージメント投稿や市場シグナルも拾いやすくなります
+
+## おすすめ運用
+
+- まずは `XR_SOURCE_MODE=mixed` を既定にして、公式とコミュニティの両方を観測する
+- 公式発表だけを確実に追いたい日は `XR_SOURCE_MODE=official`
+- 新しい論点や界隈の空気感を広めに拾いたい日は `XR_SOURCE_MODE=discovery`
+- `XR_ALLOWED_X_HANDLES` は常用せず、特定テーマの深掘り時だけ使う

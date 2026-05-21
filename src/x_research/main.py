@@ -14,8 +14,14 @@ def main() -> int:
         print(
             "Starting Grok batch "
             f"topic={settings.topic} hours={settings.hours} model={settings.model} "
-            f"max_turns={settings.max_turns} dry_run={settings.dry_run}"
+            f"source_mode={settings.source_mode} max_turns={settings.max_turns} "
+            f"dry_run={settings.dry_run}"
         )
+        if settings.allowed_x_handles and settings.source_mode != "official":
+            print(
+                "XR_ALLOWED_X_HANDLES is set, so search remains hard-filtered to those handles "
+                "even though source_mode is not official."
+            )
 
         client = XAIMorningClient(settings)
         report = client.generate_report()

@@ -45,8 +45,9 @@ class XAIMorningClient:
             "from_date": from_date,
             "to_date": to_date,
         }
-        if self.settings.allowed_x_handles:
-            tool["allowed_x_handles"] = self.settings.allowed_x_handles
+        effective_allowed_handles = self._effective_allowed_x_handles()
+        if effective_allowed_handles:
+            tool["allowed_x_handles"] = effective_allowed_handles
         if self.settings.excluded_x_handles:
             tool["excluded_x_handles"] = self.settings.excluded_x_handles
 
@@ -72,13 +73,19 @@ class XAIMorningClient:
     def _build_mock_report(self) -> GeneratedReport:
         now = datetime.now().astimezone()
         today_label = now.strftime("%Y-%m-%d")
-        handle_line = ", ".join(self.settings.allowed_x_handles) if self.settings.allowed_x_handles else "公開X全体"
+        effective_allowed_handles = self._effective_allowed_x_handles()
+        handle_line = (
+            ", ".join(effective_allowed_handles)
+            if effective_allowed_handles
+            else "公開X全体"
+        )
         text = f"""**🌅 Twitter {self.settings.topic} 朝刊 | {today_label}**
 
 **1. 🤖 モック: エージェント開発ツールの話題**
 - これは dry-run 用のモック出力です
 - 実際の xAI API や x_search にはリクエストしていません
-- allowed handles の設定は {handle_line} です
+- source_mode は {self.settings.source_mode} です
+- 有効な allowed handles は {handle_line} です
 
 > なぜ注目すべきか：Slack への整形や定期実行の動作確認を、API課金なしで進められるため。
 
@@ -109,9 +116,18 @@ https://x.com/xai/status/0000000000000000004
             usage={"mocked": True, "input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
         )
 
+    def _effective_allowed_x_handles(self) -> List[str]:
+        if self.settings.allowed_x_handles:
+            return self.settings.allowed_x_handles
+        if self.settings.source_mode == "official":
+            return self.settings.official_x_handles
+        return []
+
     def _build_prompt(self, now: datetime, start: datetime) -> str:
         language_hints = ", ".join(self.settings.language_hints) if self.settings.language_hints else "ja, en"
         today_label = now.strftime("%Y-%m-%d")
+        official_handles = ", ".join(self.settings.official_x_handles) or "主要公式アカウント"
+        source_mode = self.settings.source_mode
         return f"""
 過去{self.settings.hours}時間以内のX上での{self.settings.topic}に関するトレンド、主要な議論、高頻出トピックを検索し、Slack に投稿できる形式の朝刊にまとめてください。
 
@@ -121,33 +137,57 @@ https://x.com/xai/status/0000000000000000004
 - 優先言語: {language_hints}
 - 想定読者: 投資家 + エンジニア
 - 文体: 日本語、簡潔、情報密度高め、断定しすぎない
+- source_mode: {source_mode}
+- 公式アンカーとして特に重視するアカウント: {official_handles}
 
 要件:
 1. 過去{self.settings.hours}時間以内の内容を優先し、議論量が多く、拡散力が高く、明確なエンゲージメントがある話題を優先する
-2. 散発的な投稿を列挙せず、まず 3〜{self.settings.cluster_count} 個の最注目トピックにまとめる
-3. 各トピックには以下を含める
+2. 公式情報は重要な確認ソースとして扱うが、source_mode=official でない限り、公式アカウントだけに偏らず、研究者、起業家、開発者、投資家、OSS作者、主要インフルエンサーなど非公式の高エンゲージメント投稿も拾う
+3. 散発的な投稿を列挙せず、近い論点を束ねて 3〜{self.settings.cluster_count} 個の最注目トピックにまとめる
+4. 各トピックには以下を含める
    - 明確なタイトル
    - 2〜4件の要点サマリー
    - 「なぜ注目すべきか」を1文で
    - 2〜{self.settings.post_links_per_topic}件の元投稿リンク
-4. 影響力のあるアカウント、公式アカウント、主要関係者、または高エンゲージメントの投稿を優先する
-5. 複数の投稿が同じ出来事について議論している場合は、一つのトピックにまとめ、重複させない
-6. 大きなニュースがなくても、最も議論された話題を埋めて空白を作らない
-7. 不確かな情報やゴシップは避け、未確認情報は未確認と明記する
-8. 投資助言に見える表現は禁止する
+5. トピック選定では次を重視する
+   - 公式発表や主要人物発言そのもの
+   - その話題に対する二次拡散、引用、反論、実装報告、比較検証
+   - 同じ論点が複数の独立したアカウントから語られていること
+   - 投資や産業構造に波及しそうな示唆
+6. 投資・市場シグナルとして、モデル性能だけでなく、価格改定、API/製品リリース、提携、M&A、設備投資、GPU/半導体、クラウド需要、企業導入、規制、著作権、収益化、推論コスト、利用者の乗り換えなども注視する
+7. 不確かな情報やゴシップは避ける。未確認情報を扱う場合は未確認と明記し、断定しない
+8. 投資助言に見える表現は禁止する。代わりに「どの論点がどの企業群やバリューチェーンに関係しそうか」という観察に留める
+9. source_mode ごとの探索姿勢:
+   - official: 公式アカウントと主要人物の発信を中心に、確認性を最優先する
+   - mixed: 公式を起点にしつつ、界隈でバズっている非公式投稿や実務家の反応を必ず混ぜる
+   - discovery: 非公式の高反応投稿や新興論点を広めに探索しつつ、重要な事実は公式ソースで裏取りする
+10. 大きなニュースがなくても、最も議論された論点や空気感を埋めて空白を作らない
 
 出力形式:
 - Slack対応のMarkdownを使う
-- 各テーマに明確なタイトルと絵文字を付ける
+- 各セクションと各テーマに明確なタイトルを付ける
 - 投稿リンクは https://... 形式で直接記載する
 - 表は使わず、短い箇条書き中心でまとめる
 - 全体として「情報密度の高いコミュニティ朝刊」のようにまとめる
-- 必ず最後に「今日の観察」を 2〜3 点つける
+- 公式ソースだけでなく、反応の大きかった非公式投稿を最低1件は含める。ただし source_mode=official の場合はこの制約を外す
+- 必ず最後に「今日の観察」を 2〜3 点つけ、そのうち1点はソースの偏りや市場との接続に触れる
 
 出力構造:
 **🌅 Twitter {self.settings.topic} 朝刊 | {today_label}**
 
+**今日の公式アップデート**
 **1. {{トピックタイトル}}**
+- 要点1
+- 要点2
+
+> なぜ注目すべきか：{{一文サマリー}}
+
+元投稿:
+https://x.com/...
+https://x.com/...
+
+**界隈でバズっている論点**
+**2. {{トピックタイトル}}**
 - 要点1
 - 要点2
 - 要点3
@@ -157,6 +197,19 @@ https://x.com/xai/status/0000000000000000004
 元投稿:
 https://x.com/...
 https://x.com/...
+
+**投資に効きそうなシグナル**
+**3. {{トピックタイトル}}**
+- 要点1
+- 要点2
+
+> なぜ注目すべきか：{{一文サマリー}}
+
+元投稿:
+https://x.com/...
+https://x.com/...
+
+必要なら **監視継続 / 未確認** セクションを追加してよい
 
 **今日の観察**
 - 観察1

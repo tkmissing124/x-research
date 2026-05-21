@@ -33,9 +33,11 @@ jobs:
           XR_CLUSTER_COUNT: ${{ vars.XR_CLUSTER_COUNT || '3' }}
           XR_POST_LINKS_PER_TOPIC: ${{ vars.XR_POST_LINKS_PER_TOPIC || '2' }}
           XR_LANGUAGE_HINTS: ${{ vars.XR_LANGUAGE_HINTS || 'ja,en' }}
+          XR_SOURCE_MODE: ${{ vars.XR_SOURCE_MODE || 'mixed' }}
+          XR_OFFICIAL_X_HANDLES: ${{ vars.XR_OFFICIAL_X_HANDLES || 'OpenAI,AnthropicAI,GoogleDeepMind,xAI,GoogleAI' }}
           XR_MODEL: ${{ vars.XR_MODEL || 'grok-4.3' }}
-          XR_MAX_TURNS: ${{ vars.XR_MAX_TURNS || '1' }}
-          XR_ALLOWED_X_HANDLES: ${{ vars.XR_ALLOWED_X_HANDLES || 'OpenAI,AnthropicAI,GoogleDeepMind' }}
+          XR_MAX_TURNS: ${{ vars.XR_MAX_TURNS || '2' }}
+          XR_ALLOWED_X_HANDLES: ${{ vars.XR_ALLOWED_X_HANDLES || '' }}
           XR_EXCLUDED_X_HANDLES: ${{ vars.XR_EXCLUDED_X_HANDLES || '' }}
           XR_DRY_RUN: ${{ vars.XR_DRY_RUN || 'false' }}
         run: |
@@ -48,6 +50,7 @@ jobs:
           echo "XR_CLUSTER_COUNT=$XR_CLUSTER_COUNT"
           echo "XR_POST_LINKS_PER_TOPIC=$XR_POST_LINKS_PER_TOPIC"
           echo "XR_LANGUAGE_HINTS=$XR_LANGUAGE_HINTS"
+          echo "XR_SOURCE_MODE=$XR_SOURCE_MODE"
           echo "XR_MODEL=$XR_MODEL"
           echo "XR_MAX_TURNS=$XR_MAX_TURNS"
           echo "XR_DRY_RUN=$XR_DRY_RUN"
@@ -61,9 +64,11 @@ jobs:
           XR_CLUSTER_COUNT: ${{ vars.XR_CLUSTER_COUNT || '3' }}
           XR_POST_LINKS_PER_TOPIC: ${{ vars.XR_POST_LINKS_PER_TOPIC || '2' }}
           XR_LANGUAGE_HINTS: ${{ vars.XR_LANGUAGE_HINTS || 'ja,en' }}
+          XR_SOURCE_MODE: ${{ vars.XR_SOURCE_MODE || 'mixed' }}
+          XR_OFFICIAL_X_HANDLES: ${{ vars.XR_OFFICIAL_X_HANDLES || 'OpenAI,AnthropicAI,GoogleDeepMind,xAI,GoogleAI' }}
           XR_MODEL: ${{ vars.XR_MODEL || 'grok-4.3' }}
-          XR_MAX_TURNS: ${{ vars.XR_MAX_TURNS || '1' }}
-          XR_ALLOWED_X_HANDLES: ${{ vars.XR_ALLOWED_X_HANDLES || 'OpenAI,AnthropicAI,GoogleDeepMind' }}
+          XR_MAX_TURNS: ${{ vars.XR_MAX_TURNS || '2' }}
+          XR_ALLOWED_X_HANDLES: ${{ vars.XR_ALLOWED_X_HANDLES || '' }}
           XR_EXCLUDED_X_HANDLES: ${{ vars.XR_EXCLUDED_X_HANDLES || '' }}
           XR_DRY_RUN: ${{ vars.XR_DRY_RUN || 'false' }}
         run: python -u run.py
