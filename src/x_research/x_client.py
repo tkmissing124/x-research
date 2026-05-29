@@ -79,6 +79,11 @@ class XAIMorningClient:
             if effective_allowed_handles
             else "公開X全体"
         )
+        priority_line = (
+            ", ".join(self.settings.priority_x_handles)
+            if self.settings.priority_x_handles
+            else "なし"
+        )
         text = f"""**🌅 Twitter {self.settings.topic} 朝刊 | {today_label}**
 
 **1. 🤖 モック: エージェント開発ツールの話題**
@@ -86,6 +91,7 @@ class XAIMorningClient:
 - 実際の xAI API や x_search にはリクエストしていません
 - source_mode は {self.settings.source_mode} です
 - 有効な allowed handles は {handle_line} です
+- 重点観測する非公式アカウントは {priority_line} です
 
 > なぜ注目すべきか：Slack への整形や定期実行の動作確認を、API課金なしで進められるため。
 
@@ -127,6 +133,7 @@ https://x.com/xai/status/0000000000000000004
         language_hints = ", ".join(self.settings.language_hints) if self.settings.language_hints else "ja, en"
         today_label = now.strftime("%Y-%m-%d")
         official_handles = ", ".join(self.settings.official_x_handles) or "主要公式アカウント"
+        priority_handles = ", ".join(self.settings.priority_x_handles) or "なし"
         source_mode = self.settings.source_mode
         return f"""
 過去{self.settings.hours}時間以内のX上での{self.settings.topic}に関するトレンド、主要な議論、高頻出トピックを検索し、Slack に投稿できる形式の朝刊にまとめてください。
@@ -139,6 +146,7 @@ https://x.com/xai/status/0000000000000000004
 - 文体: 日本語、簡潔、情報密度高め、断定しすぎない
 - source_mode: {source_mode}
 - 公式アンカーとして特に重視するアカウント: {official_handles}
+- 重点観測する非公式アカウント: {priority_handles}
 
 要件:
 1. 過去{self.settings.hours}時間以内の内容を優先し、議論量が多く、拡散力が高く、明確なエンゲージメントがある話題を優先する
@@ -161,7 +169,16 @@ https://x.com/xai/status/0000000000000000004
    - official: 公式アカウントと主要人物の発信を中心に、確認性を最優先する
    - mixed: 公式を起点にしつつ、界隈でバズっている非公式投稿や実務家の反応を必ず混ぜる
    - discovery: 非公式の高反応投稿や新興論点を広めに探索しつつ、重要な事実は公式ソースで裏取りする
-10. 大きなニュースがなくても、最も議論された論点や空気感を埋めて空白を作らない
+10. 重点観測する非公式アカウントは、source_mode=official 以外では優先的に検索・評価する。ただし公式確認ソースとは扱わず、公式発表の代替にしない
+11. 大きなニュースがなくても、最も議論された論点や空気感を埋めて空白を作らない
+
+根拠と引用の厳格ルール:
+- 各トピックの主要な事実、数値、企業名、提携、資金調達、価格、製品名、機能名は、そのトピック直下の「元投稿」リンクから読者が直接たどれる範囲だけに限定する
+- リンク先投稿に明示されていない記事本文・外部ページ・スレッド続き・引用ポスト由来の詳細を本文に混ぜない。使う場合は、その詳細が確認できる投稿URLも「元投稿」に追加する
+- 1つのトピック内で複数ソースを束ねる場合、各要点がどの元投稿から確認できるかを崩さない。元投稿が支えない要点は削除するか「未確認」と明記する
+- 「引用元スレッド」「記事では」「報道では」のような表現は、該当する確認可能URLを元投稿に含められる場合だけ使う
+- 公式アカウントではない投稿は「反応」「実装報告」「観測」として扱い、公式発表や確定事実の根拠にしない
+- 迷った場合は、派手な要約より引用元の正確性を優先して、控えめに書く
 
 出力形式:
 - Slack対応のMarkdownを使う

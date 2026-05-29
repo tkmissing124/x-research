@@ -17,6 +17,7 @@ class Settings:
     language_hints: List[str]
     source_mode: str
     official_x_handles: List[str]
+    priority_x_handles: List[str]
     allowed_x_handles: List[str]
     excluded_x_handles: List[str]
     model: str
@@ -50,6 +51,15 @@ def _split_csv(value: str | None) -> List[str]:
     return [part.strip() for part in value.split(",") if part.strip()]
 
 
+def _split_handles_csv(value: str | None) -> List[str]:
+    handles = []
+    for handle in _split_csv(value):
+        normalized = handle.lstrip("@").strip()
+        if normalized:
+            handles.append(normalized)
+    return handles
+
+
 def _get_source_mode() -> str:
     value = (os.getenv("XR_SOURCE_MODE", "mixed").strip().lower() or "mixed")
     allowed_values = {"official", "mixed", "discovery"}
@@ -70,11 +80,14 @@ def load_settings() -> Settings:
     post_links_per_topic = int(os.getenv("XR_POST_LINKS_PER_TOPIC", "2"))
     language_hints = _split_csv(os.getenv("XR_LANGUAGE_HINTS", "ja,en"))
     source_mode = _get_source_mode()
-    official_x_handles = _split_csv(
+    official_x_handles = _split_handles_csv(
         os.getenv("XR_OFFICIAL_X_HANDLES", "OpenAI,AnthropicAI,GoogleDeepMind,xAI,GoogleAI")
     )
-    allowed_x_handles = _split_csv(os.getenv("XR_ALLOWED_X_HANDLES"))
-    excluded_x_handles = _split_csv(os.getenv("XR_EXCLUDED_X_HANDLES"))
+    priority_x_handles = _split_handles_csv(
+        os.getenv("XR_PRIORITY_X_HANDLES", "Codestudiopjbk,ImAI_Eruel")
+    )
+    allowed_x_handles = _split_handles_csv(os.getenv("XR_ALLOWED_X_HANDLES"))
+    excluded_x_handles = _split_handles_csv(os.getenv("XR_EXCLUDED_X_HANDLES"))
     model = os.getenv("XR_MODEL", "grok-4.3").strip() or "grok-4.3"
     max_turns = int(os.getenv("XR_MAX_TURNS", "2"))
     dry_run = _get_bool("XR_DRY_RUN", False)
@@ -94,6 +107,7 @@ def load_settings() -> Settings:
         language_hints=language_hints,
         source_mode=source_mode,
         official_x_handles=official_x_handles,
+        priority_x_handles=priority_x_handles,
         allowed_x_handles=allowed_x_handles,
         excluded_x_handles=excluded_x_handles,
         model=model,

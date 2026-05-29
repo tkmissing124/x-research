@@ -39,6 +39,7 @@ pip install -r requirements.txt
 - `XR_LANGUAGE_HINTS`: カンマ区切り。例: `ja,en`
 - `XR_SOURCE_MODE`: 収集方針。`official` / `mixed` / `discovery`。初期値は `mixed`
 - `XR_OFFICIAL_X_HANDLES`: 公式アンカーとして重視する handles。初期値は `OpenAI,AnthropicAI,GoogleDeepMind,xAI,GoogleAI`
+- `XR_PRIORITY_X_HANDLES`: 公式ではないが重点観測する handles。初期値は `Codestudiopjbk,ImAI_Eruel`
 - `XR_MODEL`: xAI で使うモデル。初期値は `grok-4.3`
 - `XR_MAX_TURNS`: Grok がツール利用しながら応答を完成させる最大ターン数。初期値は `2`
 - `XR_ALLOWED_X_HANDLES`: 収集対象をハードに絞るときの allowed handles。初期値は空
@@ -67,7 +68,7 @@ XR_DRY_RUN=true python run.py
 
 ## GitHub Actions
 
-`.github/workflows/twitter-ai-morning.yml` を使うと、GitHub Actions から毎日 `22:00 JST` に定期実行できます。
+`.github/workflows/twitter-ai-morning.yml` を使うと、GitHub Actions から毎日 `19:17 JST` に定期実行できます。
 
 必要な Repository Secrets:
 
@@ -83,6 +84,7 @@ XR_DRY_RUN=true python run.py
 - `XR_LANGUAGE_HINTS`
 - `XR_SOURCE_MODE`
 - `XR_OFFICIAL_X_HANDLES`
+- `XR_PRIORITY_X_HANDLES`
 - `XR_MODEL`
 - `XR_MAX_TURNS`
 - `XR_ALLOWED_X_HANDLES`
@@ -101,4 +103,5 @@ XR_DRY_RUN=true python run.py
 - まずは `XR_SOURCE_MODE=mixed` を既定にして、公式とコミュニティの両方を観測する
 - 公式発表だけを確実に追いたい日は `XR_SOURCE_MODE=official`
 - 新しい論点や界隈の空気感を広めに拾いたい日は `XR_SOURCE_MODE=discovery`
+- 公式ではないが重要な発信者は `XR_PRIORITY_X_HANDLES` に追加し、公式確認ソースとは分けて重点観測する
 - `XR_ALLOWED_X_HANDLES` は常用せず、特定テーマの深掘り時だけ使う

@@ -17,6 +17,8 @@ def main() -> int:
             f"source_mode={settings.source_mode} max_turns={settings.max_turns} "
             f"dry_run={settings.dry_run}"
         )
+        if settings.priority_x_handles:
+            print(f"priority x handles: {', '.join(settings.priority_x_handles)}")
         if settings.allowed_x_handles and settings.source_mode != "official":
             print(
                 "XR_ALLOWED_X_HANDLES is set, so search remains hard-filtered to those handles "

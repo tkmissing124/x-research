@@ -35,5 +35,4 @@ htmlcov/
 
 # Local environment files
 .env
-.env.*
 
